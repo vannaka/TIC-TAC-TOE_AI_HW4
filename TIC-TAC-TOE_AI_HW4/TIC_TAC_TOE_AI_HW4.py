@@ -7,10 +7,10 @@
 import os   # To clear screen
 
              #  0   1   2   3   4
-startState = [['X',' ','X','X',' '],# 0
-              ['X',' ','O','X','X'],# 1
-              [' ','X','O',' ','X'],# 2
-              [' ','X',' ','X',' '],# 3
+startState = [['X','X',' ','X',' '],# 0
+              ['X',' ',' ','X','X'],# 1
+              [' ','X','X',' ','X'],# 2
+              ['X','X','X',' ',' '],# 3
               [' ','X',' ','X','O'],# 4
               [' ',' ',' ',' ','O']]# 5
 
@@ -25,10 +25,13 @@ def main():
 
     moves = []
 
-    # Check for 2 in a rows
-    checkCols( startState, 'O', 2, moves )
+    moves = checkBoard( startState, 'X' )
 
-    print( moves )
+    print("")
+    print( "2: ", end='')
+    print( moves[0] )
+    print( "3: " , end='')
+    print( moves[1] )
 
     pass
 # main()
@@ -72,10 +75,27 @@ def beginnerDecision( state ):
 #
 #--------------------------------------------------------------
 def checkBoard( board, player ):
-    pass
+    moves_2s = []
+    moves_3s = []
+
+    checkCols( board, player, 2, moves_2s )
+    checkRows( board, player, 2, moves_2s )
+
+    checkCols( board, player, 3, moves_3s )
+    checkRows( board, player, 3, moves_3s )
+
+    return moves_2s, moves_3s
+
 # checkBoard()
 
 
+#--------------------------------------------------------------
+#
+#   checkCols( board, player, numInARow, moves )
+#       Adds x,y pairs to the 'moves' list for empty spots at
+#       the end of 'numInARow' of 'player' in the columns.
+#
+#--------------------------------------------------------------
 def checkCols( board, player, numInARow, moves ):
     # Locals
     count = 0
@@ -106,8 +126,41 @@ def checkCols( board, player, numInARow, moves ):
 # checkCols()
 
 
-def checkRows( board, player, orig_x, orig_y, numInARow, moves ):
-    pass
+#--------------------------------------------------------------
+#
+#   checkRows( board, player, numInARow, moves )
+#       Adds x,y pairs to the 'moves' list for empty spots at
+#       the end of 'numInARow' of 'player' in the rows.
+#
+#--------------------------------------------------------------
+def checkRows( board, player, numInARow, moves ):
+    # Locals
+    count = 0
+
+    # Loop through each row
+    for row in range( 0, len(board) ):
+        # Check row from left to right
+        count = 0
+        for col in range( 0, len(board[0]) ):
+            if board[row][col] == player:
+                count += 1
+            elif board[row][col] == ' ' and count == numInARow:
+                addMove( moves, col, row)
+                count = 0
+            else:
+                count = 0
+
+        # Check row from right to left
+        count = 0
+        for col in range( len(board[0]) - 1, -1, -1 ):
+            if board[row][col] == player:
+                count += 1
+            elif board[row][col] == ' ' and count == numInARow:
+                addMove( moves, col, row)
+                count = 0
+            else:
+                count = 0
+# checkRows()
 
 def checkDiags( board, player, orig_x, orig_y, numInARow, moves ):
     pass
@@ -116,6 +169,7 @@ def addMove( moves, mov_x, mov_y ):
     if moves.count( [mov_x, mov_y] ) == 0:
         moves.append( [mov_x, mov_y] )
     
+
 
 #--------------------------------------------------------------
 #
