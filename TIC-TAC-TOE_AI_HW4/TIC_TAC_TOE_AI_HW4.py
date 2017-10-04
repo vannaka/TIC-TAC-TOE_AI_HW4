@@ -70,7 +70,7 @@ def main():
 #       Makes a random move
 #
 #--------------------------------------------------------------
-def beginnerDecision( board, letter ):
+def beginnerDecision( board, letter ): # Modify so that it blocks when opponent has 3 in a row
     moves = checkBoard( board, letter )
 
     # Choose from 3 in a row moves
@@ -79,9 +79,9 @@ def beginnerDecision( board, letter ):
         return moves[1].pop(choice)
     
     # Choose from 2 in a row moves
-    #elif len(moves[0]) != 0:
-    #    choice = random.randint( 0, len( moves[0] ) - 1 )
-    #    return moves[0].pop(choice)
+    elif len(moves[4]) != 0:
+        choice = random.randint( 0, len( moves[0] ) - 1 )
+        return moves[4].pop(choice)
 
     # Choose from rest of moves
     else:
