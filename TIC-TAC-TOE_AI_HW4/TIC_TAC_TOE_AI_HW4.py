@@ -10,13 +10,20 @@ import copy
 import sys
 #     Col: 0   1   2   3   4    Row:
 board = [[' ',' ',' ',' ',' '],# 0
-         ['X','X','X','X','X'],# 1
+         [' ',' ',' ',' ',' '],# 1
          [' ',' ',' ',' ',' '],# 2
-         ['X','X','X','X','X'],# 3
+         [' ',' ',' ',' ',' '],# 3
          [' ',' ',' ',' ',' '],# 4
-         ['X','X','x','X','X']]# 5
+         [' ',' ',' ',' ',' ']]# 5
 # board[Row][Col]
 
+
+#--------------------------------------------------------------
+#
+#   Class boardNode( gameboard )
+#       Represents the state of the game board between moves
+#
+#--------------------------------------------------------------
 class boardNode(object):
     
     def __init__(self, gameboard):
@@ -24,6 +31,8 @@ class boardNode(object):
         self.value = 0
         self.children = []
         self.move = None
+
+
 #--------------------------------------------------------------
 #
 #   main()
@@ -106,6 +115,14 @@ def minMaxDecision( board, player1, player2, ply ):
 # minMaxDecision()
 
 
+#--------------------------------------------------------------
+#
+#   max_value(level, gameboard, player1, player2)
+#       Helper function that finds the maximum nodes in the
+#       minimax tree. Returns the maximum scoring gameboard 
+#       object.
+#
+#--------------------------------------------------------------
 def max_value(level, gameboard, player1, player2):
     if checkWinner(gameboard.gameboard, player1, player2) == player1:
         gameboard.value = 10000000000
@@ -119,8 +136,16 @@ def max_value(level, gameboard, player1, player2):
             if max_node is not None and gameboard.value < max_node.value:            
                 gameboard = max_node
         return gameboard     
+# max_value()
 
-
+#--------------------------------------------------------------
+#
+#   min_value(level, gameboard, player1, player2)
+#       Helper function that finds the minimum nodes in the
+#       minimax tree. Returns the minimum scoring gameboard 
+#       object.
+#
+#--------------------------------------------------------------
 def min_value(level, gameboard, player1, player2):
     if checkWinner(gameboard.gameboard, player1, player2) != 0:
         gameboard.value = -100000000   
@@ -133,24 +158,41 @@ def min_value(level, gameboard, player1, player2):
             if min_node is not None and gameboard.value > min_node.value:            
                 gameboard = min_node
         return gameboard
+# min_value()
 
+#--------------------------------------------------------------
+#
+#   findSuccessors(gameboard_state, player)
+#       Finds all of the successors to the current game board
+#       state using the empty slots. Returns the successor list.
+#
+#--------------------------------------------------------------
 def findSuccessors(gameboard_state, player):
     successors = []
     moves = checkBoard( gameboard_state, player)
     for move in moves[3]:  # For all of the blank moves
         newgameboard = boardNode(gameboard_state)
-        newgameboard.gameboard[move[0]][move[1]] = player
+        newgameboard.gameboard[move[1]][move[0]] = player
         newgameboard.value = heuristic(newgameboard, player)
         newgameboard.move = move
         successors.append(newgameboard)
     return successors
+# findSuccessors()
 
+#--------------------------------------------------------------
+#
+#   heuristic(gameboard, player)
+#       Produces the heuristic used in minimax algorithm
+#       Returns the heuristic value
+#
+#--------------------------------------------------------------
 def heuristic(gameboard, player):
     total = 0    
     moves = checkBoard(gameboard.gameboard, player)
     total = (3 * len(moves[0])) - (3 * len(moves[4])) + (2 * len(moves[1])) - (2* len(moves[5]))
     return total
-        
+# heuristic()   
+
 #--------------------------------------------------------------
 #
 #   checkWinner( board, player1, player2, ply )
@@ -170,21 +212,6 @@ def checkWinner( board, player1, player2):
         return player2
     return 0
 # checkWinner()
-
-#--------------------------------------------------------------
-#
-#   Class GameBoardState( state )
-#       Represents the state of the game board between moves
-#
-#--------------------------------------------------------------
-class GameBoardState( object ):
-    def __init__( self, board ):
-        self.board = copy.deepcopy( board )
-        self.parent = None
-        self.children = []
-        self.minMaxVal = None
-# Class GameBoardState()
-
 
 #--------------------------------------------------------------
 #
