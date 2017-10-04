@@ -6,7 +6,8 @@
 
 import os   # To clear screen
 import random
-
+import copy
+import sys
 #     Col: 0   1   2   3   4    Row:
 board = [[' ',' ',' ',' ',' '],# 0
          ['X','X','X','X','X'],# 1
@@ -16,6 +17,13 @@ board = [[' ',' ',' ',' ',' '],# 0
          ['X','X','x','X','X']]# 5
 # board[Row][Col]
 
+class boardNode(object):
+    
+    def __init__(self, gameboard):
+        self.gameboard = copy.deepcopy(gameboard)
+        self.value = 0
+        self.children = []
+        self.move = None
 #--------------------------------------------------------------
 #
 #   main()
@@ -26,8 +34,11 @@ def main():
 
     printBoard( board )
 
-    move = beginnerDecision( board, 'X' )
-    print( move )
+    newboard = minMaxDecision( board, 'O', 'X', 2 )
+    printBoard(newboard.gameboard)
+
+    #move = beginnerDecision( board, 'X' )
+    #print( move )
 
     #moves = []
     #moves = checkBoard( board, 'X' )
@@ -59,14 +70,14 @@ def beginnerDecision( board, letter ):
         return moves[1].pop(choice)
     
     # Choose from 2 in a row moves
-    elif len(moves[0]) != 0:
-        choice = random.randint( 0, len( moves[0] ) - 1 )
-        return moves[0].pop(choice)
+    #elif len(moves[0]) != 0:
+    #    choice = random.randint( 0, len( moves[0] ) - 1 )
+    #    return moves[0].pop(choice)
 
     # Choose from rest of moves
     else:
         choice = random.randint( 0, len( moves[2] ) - 1 )
-        return moves[2].pop(choice)
+        return moves[3].pop(choice)
 # beginnerDecision()
 
 #--------------------------------------------------------------
@@ -84,13 +95,81 @@ def advacedDecision( board, letter ):
 #
 #   minMaxDecision( board, player, ply )
 #       Constructs a min-max tree with the given 'ply' and
-#       returns the best move for 'player'.
+#       returns the gameboard with best move for 'player'.
 #
 #--------------------------------------------------------------
-def minMaxDecision( board, player, ply ):
-    pass
+def minMaxDecision( board, player1, player2, ply ):
+    # return the state with the maximum min value
+    level = ply
+    gameboard = boardNode(board)
+    return max_value( level, gameboard, player1, player2)
 # minMaxDecision()
 
+
+def max_value(level, gameboard, player1, player2):
+    if checkWinner(gameboard.gameboard, player1, player2) == player1:
+        gameboard.value = 10000000000
+    if level == 0:
+        return None 
+    gameboard.value = -1000000000
+
+    if gameboard is not None:
+        for node in findSuccessors(gameboard.gameboard, player1):
+            max_node = min_value(level-1, node, player1, player2)
+            if max_node is not None and gameboard.value < max_node.value:            
+                gameboard = max_node
+        return gameboard     
+
+
+def min_value(level, gameboard, player1, player2):
+    if checkWinner(gameboard.gameboard, player1, player2) != 0:
+        gameboard.value = -100000000   
+    if level == 0:
+        return None
+    gameboard.value = 1000000000
+    if gameboard is not None:
+        for node in findSuccessors(gameboard.gameboard, player2):
+            min_node = max_value(level-1, node, player1, player2)
+            if min_node is not None and gameboard.value > min_node.value:            
+                gameboard = min_node
+        return gameboard
+
+def findSuccessors(gameboard_state, player):
+    successors = []
+    moves = checkBoard( gameboard_state, player)
+    for move in moves[3]:  # For all of the blank moves
+        newgameboard = boardNode(gameboard_state)
+        newgameboard.gameboard[move[0]][move[1]] = player
+        newgameboard.value = heuristic(newgameboard, player)
+        newgameboard.move = move
+        successors.append(newgameboard)
+    return successors
+
+def heuristic(gameboard, player):
+    total = 0    
+    moves = checkBoard(gameboard.gameboard, player)
+    total = (3 * len(moves[0])) - (3 * len(moves[4])) + (2 * len(moves[1])) - (2* len(moves[5]))
+    return total
+        
+#--------------------------------------------------------------
+#
+#   checkWinner( board, player1, player2, ply )
+#       Checks to see if either player has won the game.
+#       Returns that respective player
+#
+#--------------------------------------------------------------
+def checkWinner( board, player1, player2):
+    # return the state with the maximum min value
+    moves = []
+    player1_count = checkCols( board, player1, 4, moves ) + checkRows( board, player1, 4, moves ) + checkDiags( board, player1, 4, moves )
+    player2_count = checkCols( board, player2, 4, moves ) + checkRows( board, player2, 4, moves ) + checkDiags( board, player2, 4, moves )
+
+    if player1_count != 0:
+        return player1
+    if player2_count != 0:
+        return player2
+    return 0
+# checkWinner()
 
 #--------------------------------------------------------------
 #
@@ -120,7 +199,16 @@ class GameBoardState( object ):
 def checkBoard( board, player ):
     moves_2s = []
     moves_3s = []
+    enemy_moves_2s = []
+    enemy_moves_3s = []
     emptySpaces = []
+    enemy_player = None
+
+    if player == 'O':
+        enemy_player = 'X'
+    else:
+        enemy_player = 'O'
+
 
     # Get two in a row moves
     checkCols( board, player, 2, moves_2s )
@@ -132,17 +220,28 @@ def checkBoard( board, player ):
     checkRows( board, player, 3, moves_3s )
     checkDiags( board, player, 3, moves_3s )
 
+    # Get two in a row moves for enemy
+    checkCols( board, enemy_player, 2, enemy_moves_2s )
+    checkRows( board, enemy_player, 2, enemy_moves_2s )
+    checkDiags( board, enemy_player, 2, enemy_moves_2s )
+
+    # Get three in a row moves for enemy
+    checkCols( board, enemy_player, 3, enemy_moves_3s )
+    checkRows( board, enemy_player, 3, enemy_moves_3s )
+    checkDiags( board, enemy_player, 3, enemy_moves_3s )
+
     # Find all empty spaces
     for x in range( 0, len( board[0] ) ):
         for y in range( 0, len( board ) ):
             if board[y][x] == ' ':
                 emptySpaces.append( (x,y) )
     
-    # Find all empty spots not already in moves_2s or moves_3s
+    # Find all empty spots not already in moves_2s or moves_3s   ##### I NEED TO CHECK TO SEE HOW moves_others WILL BE USED IN THE ADVANCED AND MASTER PLAYERS
     moves_others = set(emptySpaces).difference(moves_2s)
+    moves_others = set(emptySpaces).difference(moves_3s)
     moves_others = moves_others.difference(moves_3s)
 
-    return moves_2s, moves_3s, list(moves_others)
+    return moves_2s, moves_3s, list(moves_others), emptySpaces, enemy_moves_2s, enemy_moves_3s
 # checkBoard()
 
 
@@ -156,6 +255,7 @@ def checkBoard( board, player ):
 def checkCols( board, player, numInARow, moves ):
     # Locals
     count = 0
+    total_count = 0 # used for the minimax heuristic, #### THIS MIGHT DOUBLE COUNT 2,3,4 moves in a row
 
     # Loop through each column
     for col in range( 0, len(board[0]) ):
@@ -166,6 +266,7 @@ def checkCols( board, player, numInARow, moves ):
                 count += 1
             elif board[row][col] == ' ' and count == numInARow:
                 addMove( moves, col, row)
+                total_count += 1
                 count = 0
             else:
                 count = 0
@@ -177,9 +278,11 @@ def checkCols( board, player, numInARow, moves ):
                 count += 1
             elif board[row][col] == ' ' and count == numInARow:
                 addMove( moves, col, row)
+                total_count += 1
                 count = 0
             else:
                 count = 0
+    return total_count
 # checkCols()
 
 
@@ -193,6 +296,7 @@ def checkCols( board, player, numInARow, moves ):
 def checkRows( board, player, numInARow, moves ):
     # Locals
     count = 0
+    total_count = 0
 
     # Loop through each row
     for row in range( 0, len(board) ):
@@ -203,6 +307,7 @@ def checkRows( board, player, numInARow, moves ):
                 count += 1
             elif board[row][col] == ' ' and count == numInARow:
                 addMove( moves, col, row)
+                total_count += 1
                 count = 0
             else:
                 count = 0
@@ -214,9 +319,11 @@ def checkRows( board, player, numInARow, moves ):
                 count += 1
             elif board[row][col] == ' ' and count == numInARow:
                 addMove( moves, col, row)
+                total_count += 1
                 count = 0
             else:
                 count = 0
+    return total_count
 # checkRows()
 
 
@@ -231,6 +338,7 @@ def checkDiags( board, player, numInARow, moves ):
     # Locals
     count = 0
     offset = 0
+    total_count = 0
     # start coordinates for the diaganols containing at least 4 spots
     # [col, row, col_mod, row_mod]
     diags_coord = [[1,0,1,1], [0,0,1,1], [0,1,1,1], [0,2,1,1],          # Top-left to bottom-right
@@ -254,12 +362,14 @@ def checkDiags( board, player, numInARow, moves ):
                 count += 1
             elif board[row][col] == ' ' and count == numInARow:
                 addMove( moves, col, row )
+                total_count += 1
                 count = 0
             else:
                 count = 0
 
             row += row_mod
             col += col_mod
+    return total_count
 # checkDiags()
 
 
@@ -299,7 +409,7 @@ def makeMove( state, player, mov_x, mov_y ):
 
 #--------------------------------------------------------------
 #
-#   printBorad( state )
+#   printBoard( state )
 #       Display the board
 #
 #--------------------------------------------------------------
@@ -326,7 +436,7 @@ def printBoard( state ):
         for x in y:
             print( "|" + x, end='')
         print("|")
-# printBorad()
+# printBoard()
 
 
 # Call main function
