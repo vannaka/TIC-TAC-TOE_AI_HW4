@@ -5,14 +5,16 @@
 # Last Edited on 10-1-17
 
 import os   # To clear screen
+import random
 
-             #  0   1   2   3   4
-startState = [['X','X',' ','X',' '],# 0
-              ['X',' ',' ','X','X'],# 1
-              [' ','X','X',' ','X'],# 2
-              ['X','X','X',' ',' '],# 3
-              [' ','X',' ','X','O'],# 4
-              [' ',' ',' ',' ','O']]# 5
+#     Col: 0   1   2   3   4    Row:
+board = [[' ',' ',' ',' ',' '],# 0
+         ['X','X','X','X','X'],# 1
+         [' ',' ',' ',' ',' '],# 2
+         ['X','X','X','X','X'],# 3
+         [' ',' ',' ',' ',' '],# 4
+         ['X','X','x','X','X']]# 5
+# board[Row][Col]
 
 #--------------------------------------------------------------
 #
@@ -21,20 +23,51 @@ startState = [['X','X',' ','X',' '],# 0
 #
 #--------------------------------------------------------------
 def main():
-    printBorad( startState )
 
-    moves = []
+    printBoard( board )
 
-    moves = checkBoard( startState, 'X' )
+    move = beginnerDecision( board, 'X' )
+    print( move )
 
-    print("")
-    print( "2: ", end='')
-    print( moves[0] )
-    print( "3: " , end='')
-    print( moves[1] )
+    #moves = []
+    #moves = checkBoard( board, 'X' )
 
-    pass
+    #print("")
+    #print("2's: ", end='')
+    #print(moves[0])
+
+    #print("3's: ", end='')
+    #print(moves[1])
+
+    #print("other's: ", end='')
+    #print(moves[2])
 # main()
+
+
+#--------------------------------------------------------------
+#
+#   beginnerDecision( state )
+#       Makes a random move
+#
+#--------------------------------------------------------------
+def beginnerDecision( board, letter ):
+    moves = checkBoard( board, letter )
+
+    # Choose from 3 in a row moves
+    if len(moves[1]) != 0:
+        choice = random.randint( 0, len( moves[1] ) - 1 )
+        return moves[1].pop(choice)
+    
+    # Choose from 2 in a row moves
+    elif len(moves[0]) != 0:
+        choice = random.randint( 0, len( moves[0] ) - 1 )
+        return moves[0].pop(choice)
+
+    # Choose from rest of moves
+    else:
+        choice = random.randint( 0, len( moves[2] ) - 1 )
+        return moves[2].pop(choice)
+# beginnerDecision()
 
 
 #--------------------------------------------------------------
@@ -44,48 +77,50 @@ def main():
 #
 #--------------------------------------------------------------
 class GameBoardState( object ):
-    def __init__( self, state ):
-        self.boardState = copy.deepcopy( state )
+    def __init__( self, board ):
+        self.board = copy.deepcopy( board )
         self.parent = None
         self.children = []
-        self.moveCost = None
-
+        self.minMaxVal = None
 # Class GameBoardState()
 
 
 #--------------------------------------------------------------
 #
-#   beginnerDecision( state )
-#       Makes a random move
-#
-#--------------------------------------------------------------
-def beginnerDecision( state ):
-    
-    pass
-# beginnerDecision()
-
-
-#--------------------------------------------------------------
-#
 #   checkBoard( state, player )
-#       Return two lists of x,y coordinates marking the
+#       Return three lists of x,y coordinates marking the
 #       location of possible moves. The first list marks the
 #       empty space at the end of 2 in a rows. The second list,
-#       3 in a rows.
+#       3 in a rows. The third list contains emptys spots not
+#       in the first two lists.
 #
 #--------------------------------------------------------------
 def checkBoard( board, player ):
     moves_2s = []
     moves_3s = []
+    emptySpaces = []
 
+    # Get two in a row moves
     checkCols( board, player, 2, moves_2s )
     checkRows( board, player, 2, moves_2s )
+    checkDiags( board, player, 2, moves_2s )
 
+    # Get three in a row moves
     checkCols( board, player, 3, moves_3s )
     checkRows( board, player, 3, moves_3s )
+    checkDiags( board, player, 3, moves_3s )
 
-    return moves_2s, moves_3s
+    # Find all empty spaces
+    for x in range( 0, len( board[0] ) ):
+        for y in range( 0, len( board ) ):
+            if board[y][x] == ' ':
+                emptySpaces.append( (x,y) )
+    
+    # Find all empty spots not already in moves_2s or moves_3s
+    moves_others = set(emptySpaces).difference(moves_2s)
+    moves_others = moves_others.difference(moves_3s)
 
+    return moves_2s, moves_3s, list(moves_others)
 # checkBoard()
 
 
@@ -162,13 +197,54 @@ def checkRows( board, player, numInARow, moves ):
                 count = 0
 # checkRows()
 
-def checkDiags( board, player, orig_x, orig_y, numInARow, moves ):
-    pass
+
+#--------------------------------------------------------------
+#
+#   checkDiags( board, player, numInARow, moves )
+#       Adds x,y pairs to the 'moves' list for empty spots at
+#       the end of 'numInARow' of 'player' in the diaganols.
+#
+#--------------------------------------------------------------
+def checkDiags( board, player, numInARow, moves ):
+    # Locals
+    count = 0
+    offset = 0
+    # start coordinates for the diaganols containing at least 4 spots
+    # [col, row, col_mod, row_mod]
+    diags_coord = [[1,0,1,1], [0,0,1,1], [0,1,1,1], [0,2,1,1],          # Top-left to bottom-right
+                   [4,3,-1,-1], [4,4,-1,-1], [4,5,-1,-1], [3,5,-1,-1],  # bottom-right to top-left
+                   [3,0,-1,1], [4,0,-1,1], [4,1,-1,1], [4,2,-1,1],      # Top-right to bottom-left
+                   [0,3,1,-1], [0,4,1,-1], [0,5,1,-1], [1,5,1,-1]]      # Bottom-left to top-right
+    
+
+    # Loop through each diag
+    for diag in range( 0, len( diags_coord ) ):
+        col = diags_coord[diag][0]
+        row = diags_coord[diag][1]
+        col_mod = diags_coord[diag][2]
+        row_mod = diags_coord[diag][3]
+
+        # Check diag
+        offset = 0
+        count = 0
+        while col >= 0 and col < len( board[0] ) and row >= 0 and row < len( board ):
+            if board[row][col] == player:
+                count += 1
+            elif board[row][col] == ' ' and count == numInARow:
+                addMove( moves, col, row )
+                count = 0
+            else:
+                count = 0
+
+            row += row_mod
+            col += col_mod
+# checkDiags()
+
 
 def addMove( moves, mov_x, mov_y ):
-    if moves.count( [mov_x, mov_y] ) == 0:
-        moves.append( [mov_x, mov_y] )
-    
+    if moves.count( (mov_x, mov_y) ) == 0:
+        moves.append( (mov_x, mov_y) )
+# addMoves()
 
 
 #--------------------------------------------------------------
@@ -198,7 +274,7 @@ def makeMove( state, player, mov_x, mov_y ):
 #       Display the board
 #
 #--------------------------------------------------------------
-def printBorad( state ):
+def printBoard( state ):
     # Locals
     row = 0
 
