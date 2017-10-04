@@ -46,7 +46,7 @@ def main():
 
 #--------------------------------------------------------------
 #
-#   beginnerDecision( state )
+#   beginnerDecision( board, letter )
 #       Makes a random move
 #
 #--------------------------------------------------------------
@@ -68,6 +68,28 @@ def beginnerDecision( board, letter ):
         choice = random.randint( 0, len( moves[2] ) - 1 )
         return moves[2].pop(choice)
 # beginnerDecision()
+
+#--------------------------------------------------------------
+#
+#   advacedDecision( board, letter )
+#       Uses min-max to make a move decision
+#
+#--------------------------------------------------------------
+def advacedDecision( board, letter ):
+    pass
+# advacedDecision()
+
+
+#--------------------------------------------------------------
+#
+#   minMaxDecision( board, player, ply )
+#       Constructs a min-max tree with the given 'ply' and
+#       returns the best move for 'player'.
+#
+#--------------------------------------------------------------
+def minMaxDecision( board, player, ply ):
+    pass
+# minMaxDecision()
 
 
 #--------------------------------------------------------------
@@ -241,6 +263,13 @@ def checkDiags( board, player, numInARow, moves ):
 # checkDiags()
 
 
+#--------------------------------------------------------------
+#
+#   addMove( moves, mov_x, mov_y )
+#       Adds the move to 'moves' list if it is not already in
+#       the list.
+#
+#--------------------------------------------------------------
 def addMove( moves, mov_x, mov_y ):
     if moves.count( (mov_x, mov_y) ) == 0:
         moves.append( (mov_x, mov_y) )
@@ -298,6 +327,7 @@ def printBoard( state ):
             print( "|" + x, end='')
         print("|")
 # printBorad()
+
 
 # Call main function
 main()
