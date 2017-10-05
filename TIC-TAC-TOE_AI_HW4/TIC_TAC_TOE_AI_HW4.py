@@ -8,6 +8,9 @@ import os   # To clear screen
 import random
 import copy
 import sys
+import time
+import pprint
+
 #     Col: 0   1   2   3   4    Row:
 board = [[' ',' ',' ',' ',' '],# 0
          [' ',' ',' ',' ',' '],# 1
@@ -16,8 +19,8 @@ board = [[' ',' ',' ',' ',' '],# 0
          [' ',' ',' ',' ',' '],# 4
          [' ',' ',' ',' ',' ']]# 5
 # board[Row][Col]
-
-
+checkWin = 0
+moveCount = 0
 #--------------------------------------------------------------
 #
 #   Class boardNode( gameboard )
@@ -32,6 +35,34 @@ class boardNode(object):
         self.children = []
         self.move = None
 
+def beginplay():
+    global moveCount
+    pp = pprint.PrettyPrinter()
+    # Beginner is X's
+    while checkWinner(board, 'X', 'O') == 0:
+        # Beginner's move
+        move = beginnerDecision(board, 'X')
+        board[move[1]][move[0]] = 'X'
+        
+        if moveCount < 8:
+            pp.pprint(board)
+        
+        X = input('Enter the row index: ')
+        Y = input('Enter the col index: ')
+        
+        X = int(X)
+        Y = int(Y)
+
+        # col, row
+        board[X][Y] = 'O'
+
+        if moveCount < 8:
+            pp.pprint(board)
+            moveCount += 1        
+
+    pp.pprint(board)
+    print('The winner is: {0}'.format(checkWinner(board, 'X', 'O')))
+    
 
 #--------------------------------------------------------------
 #
@@ -43,7 +74,7 @@ def main():
 
     printBoard( board )
 
-    newboard = minMaxDecision( board, 'O', 'X', 2 )
+    newboard = minMaxDecision( board, 'X', 'O', 2 )
     printBoard(newboard.gameboard)
 
     #move = beginnerDecision( board, 'X' )
@@ -79,13 +110,13 @@ def beginnerDecision( board, letter ): # Modify so that it blocks when opponent 
         return moves[1].pop(choice)
     
     # Choose from 2 in a row moves
-    elif len(moves[4]) != 0:
-        choice = random.randint( 0, len( moves[0] ) - 1 )
-        return moves[4].pop(choice)
+    elif len(moves[5]) != 0:
+        choice = random.randint( 0, len( moves[5] ) - 1 )
+        return moves[5].pop(choice)
 
     # Choose from rest of moves
     else:
-        choice = random.randint( 0, len( moves[2] ) - 1 )
+        choice = random.randint( 0, len( moves[3] ) - 1 )
         return moves[3].pop(choice)
 # beginnerDecision()
 
@@ -203,9 +234,11 @@ def heuristic(gameboard, player):
 def checkWinner( board, player1, player2):
     # return the state with the maximum min value
     moves = []
+    global checkWin
+    checkWin = 1
     player1_count = checkCols( board, player1, 4, moves ) + checkRows( board, player1, 4, moves ) + checkDiags( board, player1, 4, moves )
     player2_count = checkCols( board, player2, 4, moves ) + checkRows( board, player2, 4, moves ) + checkDiags( board, player2, 4, moves )
-
+    checkWin = 0
     if player1_count != 0:
         return player1
     if player2_count != 0:
@@ -295,6 +328,9 @@ def checkCols( board, player, numInARow, moves ):
                 addMove( moves, col, row)
                 total_count += 1
                 count = 0
+            elif checkWin == 1 and count == numInARow:
+                total_count += 1
+                count = 0
             else:
                 count = 0
 
@@ -305,6 +341,9 @@ def checkCols( board, player, numInARow, moves ):
                 count += 1
             elif board[row][col] == ' ' and count == numInARow:
                 addMove( moves, col, row)
+                total_count += 1
+                count = 0
+            elif checkWin == 1 and count == numInARow:
                 total_count += 1
                 count = 0
             else:
@@ -336,6 +375,9 @@ def checkRows( board, player, numInARow, moves ):
                 addMove( moves, col, row)
                 total_count += 1
                 count = 0
+            elif checkWin == 1 and count == numInARow:
+                total_count += 1
+                count = 0
             else:
                 count = 0
 
@@ -346,6 +388,9 @@ def checkRows( board, player, numInARow, moves ):
                 count += 1
             elif board[row][col] == ' ' and count == numInARow:
                 addMove( moves, col, row)
+                total_count += 1
+                count = 0
+            elif checkWin == 1 and count == numInARow:
                 total_count += 1
                 count = 0
             else:
@@ -389,6 +434,9 @@ def checkDiags( board, player, numInARow, moves ):
                 count += 1
             elif board[row][col] == ' ' and count == numInARow:
                 addMove( moves, col, row )
+                total_count += 1
+                count = 0
+            elif checkWin == 1 and count == numInARow:
                 total_count += 1
                 count = 0
             else:
@@ -467,4 +515,7 @@ def printBoard( state ):
 
 
 # Call main function
-main()
+#main()
+
+# for playing the beginner
+beginplay()
