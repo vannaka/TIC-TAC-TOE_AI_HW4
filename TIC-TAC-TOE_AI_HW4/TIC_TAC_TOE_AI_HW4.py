@@ -21,6 +21,7 @@ board = [[' ',' ',' ',' ',' '],# 0
 # board[Row][Col]
 checkWin = 0
 moveCount = 0
+numNodesGen = 0
 #--------------------------------------------------------------
 #
 #   Class boardNode( gameboard )
@@ -38,7 +39,7 @@ class boardNode(object):
 def beginplay():
     global moveCount
     pp = pprint.PrettyPrinter()
-    # Beginner is X's
+    # Beginner is X's, User is O's
     while checkWinner(board, 'X', 'O') == 0:
         # Beginner's move
         move = beginnerDecision(board, 'X')
@@ -66,33 +67,55 @@ def beginplay():
 
 #--------------------------------------------------------------
 #
-#   main()
-#       Main function
+#   advancedplay()
+#       Main function for advanced vs. beginner
 #
 #--------------------------------------------------------------
-def main():
+def advancedplay():
+    global moveCount, numNodesGen, board
 
-    printBoard( board )
+    pp = pprint.PrettyPrinter()
+    # Beginner is X's, User is O's
+    while checkWinner(board, 'X', 'O') == 0:
+        # Beginner's move
+        move = beginnerDecision(board, 'X')
+        board[move[1]][move[0]] = 'X'
+        
+        if checkWinner(board, 'X', 'O') != 0:
+            break
 
-    newboard = minMaxDecision( board, 'X', 'O', 2 )
-    printBoard(newboard.gameboard)
+        if moveCount < 8:
+            pp.pprint(board)
+        
+        # Advanced's move
+        numNodesGen = 0 
+        start_time = time.time()
+        newboard = advancedDecision( board, 'O', 'X', 2 )
+        end_time = time.time() - start_time
+        end_time = end_time * 1000                # Convert time in seconds to milliseconds
+        board = copy.deepcopy(newboard.gameboard)
 
-    #move = beginnerDecision( board, 'X' )
-    #print( move )
+        if moveCount < 8:
+            pp.pprint(board)
+            moveCount += 1   
 
-    #moves = []
-    #moves = checkBoard( board, 'X' )
+        print('Number of nodes generated: {0}'.format(numNodesGen))
+        print("CPU execution time: " + str(end_time) + " ms")    
 
-    #print("")
-    #print("2's: ", end='')
-    #print(moves[0])
+    pp.pprint(board)
 
-    #print("3's: ", end='')
-    #print(moves[1])
+    winner = checkWinner(board, 'X', 'O')
+    
+    if winner == 'X':
+        print_winner = 'Beginner'
+    elif winner == 'O':
+        print_winner = 'Advanced'
 
-    #print("other's: ", end='')
-    #print(moves[2])
-# main()
+    print('The winner is: {0}'.format(print_winner))
+    
+    
+
+# advancedplay()
 
 
 #--------------------------------------------------------------
@@ -126,8 +149,8 @@ def beginnerDecision( board, letter ): # Modify so that it blocks when opponent 
 #       Uses min-max to make a move decision
 #
 #--------------------------------------------------------------
-def advacedDecision( board, letter ):
-    pass
+def advancedDecision( board, player1, player2, ply ):
+    return minMaxDecision( board, player1, player2, ply )
 # advacedDecision()
 
 
@@ -156,16 +179,17 @@ def minMaxDecision( board, player1, player2, ply ):
 #--------------------------------------------------------------
 def max_value(level, gameboard, player1, player2):
     if checkWinner(gameboard.gameboard, player1, player2) == player1:
-        gameboard.value = 10000000000
+        gameboard.value = 1000000000
     if level == 0:
         return None 
-    gameboard.value = -1000000000
+    value = -1000000000
 
     if gameboard is not None:
         for node in findSuccessors(gameboard.gameboard, player1):
             max_node = min_value(level-1, node, player1, player2)
-            if max_node is not None and gameboard.value < max_node.value:            
+            if max_node is not None and value < max_node.value:            
                 gameboard = max_node
+                value = max_node.value
         return gameboard     
 # max_value()
 
@@ -179,15 +203,16 @@ def max_value(level, gameboard, player1, player2):
 #--------------------------------------------------------------
 def min_value(level, gameboard, player1, player2):
     if checkWinner(gameboard.gameboard, player1, player2) != 0:
-        gameboard.value = -100000000   
+        gameboard.value = -1000000000   
     if level == 0:
         return None
-    gameboard.value = 1000000000
+    value = 1000000000
     if gameboard is not None:
         for node in findSuccessors(gameboard.gameboard, player2):
             min_node = max_value(level-1, node, player1, player2)
-            if min_node is not None and gameboard.value > min_node.value:            
+            if min_node is not None and value > min_node.value:            
                 gameboard = min_node
+                value = min_node.value
         return gameboard
 # min_value()
 
@@ -199,6 +224,7 @@ def min_value(level, gameboard, player1, player2):
 #
 #--------------------------------------------------------------
 def findSuccessors(gameboard_state, player):
+    global numNodesGen
     successors = []
     moves = checkBoard( gameboard_state, player)
     for move in moves[3]:  # For all of the blank moves
@@ -207,6 +233,7 @@ def findSuccessors(gameboard_state, player):
         newgameboard.value = heuristic(newgameboard, player)
         newgameboard.move = move
         successors.append(newgameboard)
+        numNodesGen += 1
     return successors
 # findSuccessors()
 
@@ -220,7 +247,7 @@ def findSuccessors(gameboard_state, player):
 def heuristic(gameboard, player):
     total = 0    
     moves = checkBoard(gameboard.gameboard, player)
-    total = (3 * len(moves[0])) - (3 * len(moves[4])) + (2 * len(moves[1])) - (2* len(moves[5]))
+    total = (3 * len(moves[0])) - (3 * len(moves[5])) + (2 * len(moves[1])) - (2* len(moves[4]))
     return total
 # heuristic()   
 
@@ -518,4 +545,7 @@ def printBoard( state ):
 #main()
 
 # for playing the beginner
-beginplay()
+#beginplay()
+
+# for playing advanced vs beginner
+advancedplay()
