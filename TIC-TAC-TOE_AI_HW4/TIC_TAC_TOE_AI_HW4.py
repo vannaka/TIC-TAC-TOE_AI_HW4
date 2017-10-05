@@ -26,6 +26,7 @@ beginWins = 0
 advancedWins = 0
 masterWins = 0
 beginvsmasterTie = 0
+beginvsadvancedTie = 0
 #--------------------------------------------------------------
 #
 #   Class boardNode( gameboard )
@@ -178,7 +179,7 @@ def masterplay():
 
 
 def beginnerVsAdvacedPlay():
-    global moveCount, numNodesGen, board, beginWins, advancedWins, beginvsmasterTie
+    global moveCount, numNodesGen, board, beginWins, advancedWins, beginvsadvancedTie
 
     board = [[' ',' ',' ',' ',' '],# 0
          [' ',' ',' ',' ',' '],# 1
@@ -199,15 +200,13 @@ def beginnerVsAdvacedPlay():
 
         # Master's move
         numNodesGen = 0 
-        newboard = masterDecision( board, 'O', 'X', 2 )
-        newboard = newboard.parent
-        newboard = newboard.parent              # Convert time in seconds to milliseconds
+        newboard = masterDecision( board, 'O', 'X', 2 )             # Convert time in seconds to milliseconds
         board = copy.deepcopy(newboard.gameboard)
  
         
         moves = checkBoard(board, 'X')
-        if moves[3] is None:
-            beginvsmasterTie += 1
+        if len(moves[3]) == 0:
+            beginvsadvancedTie += 1
             break
     pp.pprint(board)
 
@@ -218,7 +217,7 @@ def beginnerVsAdvacedPlay():
         beginWins += 1
     elif winner == 'O':
         print_winner = 'Advanced'
-        masterWins +=1
+        advancedWins +=1
     else:
         print_winner = 'Tie'
 
@@ -227,7 +226,7 @@ def beginnerVsAdvacedPlay():
 
 
 def advancedVsBeginnerplay():
-    global moveCount, numNodesGen, board, beginWins, masterWins, beginvsmasterTie
+    global moveCount, numNodesGen, board, beginWins, masterWins, beginvsadvancedTie
 
     board = [[' ',' ',' ',' ',' '],# 0
          [' ',' ',' ',' ',' '],# 1
@@ -244,20 +243,21 @@ def advancedVsBeginnerplay():
         # Advanced's move
         numNodesGen = 0 
         newboard = masterDecision( board, 'X', 'O', 2 )
-        newboard = newboard.parent
-        newboard = newboard.parent              # Convert time in seconds to milliseconds
+
         board = copy.deepcopy(newboard.gameboard)
         
         if checkWinner(board, 'X', 'O') != 0:
             break
 
+        moves = checkBoard(board, 'X')
+        if len(moves[3]) == 0:
+            beginvsadvancedTie += 1
+            break
+
         move = beginnerDecision(board, 'O')
         board[move[1]][move[0]] = 'O'
     
-        moves = checkBoard(board, 'X')
-        if moves[3] is None:
-            beginvsmasterTie += 1
-            break
+
 
     pp.pprint(board)
 
@@ -268,7 +268,7 @@ def advancedVsBeginnerplay():
         beginWins += 1
     elif winner == 'X':
         print_winner = 'Advanced'
-        masterWins +=1
+        advancedWins +=1
     else:
         print_winner = 'Tie'
 
@@ -349,13 +349,15 @@ def mastervsbeginnerplay():
         if checkWinner(board, 'X', 'O') != 0:
             break
 
-        move = beginnerDecision(board, 'O')
-        board[move[1]][move[0]] = 'O'
-    
         moves = checkBoard(board, 'X')
         if moves[3] is None:
             beginvsmasterTie += 1
             break
+
+        move = beginnerDecision(board, 'O')
+        board[move[1]][move[0]] = 'O'
+    
+ 
 
     pp.pprint(board)
 
@@ -444,6 +446,8 @@ def minMaxDecision( board, player1, player2, ply ):
 #
 #--------------------------------------------------------------
 def max_value(level, gameboard, player1, player2):
+    gameboards=[]
+    gameboards.append(gameboard)
     if checkWinner(gameboard.gameboard, player1, player2) == player1:
         gameboard.value = 1000000000
     if level == 0:
@@ -453,9 +457,10 @@ def max_value(level, gameboard, player1, player2):
     if gameboard is not None:
         for node in findSuccessors(gameboard, player1):
             max_node = min_value(level-1, node, player1, player2)
-            if max_node is not None and value < max_node.value:            
-                gameboard = max_node
+            if max_node is not None and value <= max_node.value:            
+                gameboards.append(max_node)
                 value = max_node.value
+        gameboard = gameboards[random.randint(0,len(gameboards)-1)]
         return gameboard     
 # max_value()
 
@@ -468,6 +473,8 @@ def max_value(level, gameboard, player1, player2):
 #
 #--------------------------------------------------------------
 def min_value(level, gameboard, player1, player2):
+    gameboards=[]
+    gameboards.append(gameboard)
     if checkWinner(gameboard.gameboard, player1, player2) != 0:
         gameboard.value = -1000000000   
     if level == 0:
@@ -476,9 +483,10 @@ def min_value(level, gameboard, player1, player2):
     if gameboard is not None:
         for node in findSuccessors(gameboard, player2):
             min_node = max_value(level-1, node, player1, player2)
-            if min_node is not None and value > min_node.value:            
-                gameboard = min_node
+            if min_node is not None and value >= min_node.value:            
+                gameboards.append(min_node)
                 value = min_node.value
+        gameboard = gameboards[random.randint(0,len(gameboards)-1)]
         return gameboard
 # min_value()
 
@@ -820,12 +828,22 @@ def printBoard( state ):
 # for playing master vs advanced
 #masterplay()
 
-
-beginnervsmasterplay()
-mastervsbeginnerplay()
-beginnervsmasterplay()
-mastervsbeginnerplay()
+for i in range( 0, 49 ):
+    advancedVsBeginnerplay()
+    
 
 print('Number of beginner wins {0}'.format(beginWins))
-print('Number of master wins {0}'.format(masterWins))
-print('Number of ties {0}'.format(beginvsmasterTie))
+print('Number of advanced wins {0}'.format(advancedWins))
+print('Number of ties {0}'.format(beginvsadvancedTie))
+
+
+#beginnerWins = 0
+#advancedWins = 0
+#beginvsadvancedTie = 0
+
+#for i in range( 0, 49 ):
+#    beginnerVsAdvacedPlay()
+
+#print('Number of beginner wins {0}'.format(beginWins))
+#print('Number of advanced wins {0}'.format(advancedWins))
+#print('Number of ties {0}'.format(beginvsadvancedTie))
