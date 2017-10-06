@@ -27,6 +27,8 @@ advancedWins = 0
 masterWins = 0
 beginvsmasterTie = 0
 beginvsadvancedTie = 0
+advancedvsmasterTie = 0
+
 #--------------------------------------------------------------
 #
 #   Class boardNode( gameboard )
@@ -53,6 +55,7 @@ def beginplay():
         if moveCount < 8:
             pp.pprint(board)
         
+        # User's move
         X = input('Enter the row index: ')
         Y = input('Enter the col index: ')
         
@@ -80,7 +83,7 @@ def advancedplay():
     global moveCount, numNodesGen, board
 
     pp = pprint.PrettyPrinter()
-    # Beginner is X's, User is O's
+    # Beginner is X's, Advanced is O's
     while checkWinner(board, 'X', 'O') == 0:
         # Beginner's move
         move = beginnerDecision(board, 'X')
@@ -96,7 +99,6 @@ def advancedplay():
         numNodesGen = 0 
         start_time = time.time()
         newboard = advancedDecision( board, 'O', 'X', 2 )
-        #newboard = newboard.parent
         end_time = time.time() - start_time
         end_time = end_time * 1000                # Convert time in seconds to milliseconds
         board = copy.deepcopy(newboard.gameboard)
@@ -130,7 +132,7 @@ def masterplay():
     global moveCount, numNodesGen, board
 
     pp = pprint.PrettyPrinter()
-    # Beginner is X's, User is O's
+    # Advanced is X's, Master is O's
     while checkWinner(board, 'X', 'O') == 0:
         # Advanced's move
         numNodesGen = 0 
@@ -177,8 +179,13 @@ def masterplay():
     print('The winner is: {0}'.format(print_winner))
 # masterplay()
 
-
-def beginnerVsAdvacedPlay():
+#--------------------------------------------------------------
+#
+#   beginnerVsAdvancedPlay()
+#       Main function for beginner vs. advanced
+#
+#--------------------------------------------------------------
+def beginnerVsAdvancedPlay():
     global moveCount, numNodesGen, board, beginWins, advancedWins, beginvsadvancedTie
 
     board = [[' ',' ',' ',' ',' '],# 0
@@ -189,25 +196,32 @@ def beginnerVsAdvacedPlay():
          [' ',' ',' ',' ',' ']]# 5
 
     pp = pprint.PrettyPrinter()
-    # Beginner is X's, User is O's
+    # Beginner is X's, Advanced is O's
     while checkWinner(board, 'X', 'O') == 0:
         # Beginner's move
         move = beginnerDecision(board, 'X')
         board[move[1]][move[0]] = 'X'
         
+        # Check for winner
         if checkWinner(board, 'X', 'O') != 0:
             break
-
-        # Master's move
-        numNodesGen = 0 
-        newboard = masterDecision( board, 'O', 'X', 2 )             # Convert time in seconds to milliseconds
-        board = copy.deepcopy(newboard.gameboard)
- 
-        
+        # Check for tie
         moves = checkBoard(board, 'X')
         if len(moves[3]) == 0:
             beginvsadvancedTie += 1
             break
+
+        # Advanced's move
+        numNodesGen = 0 
+        newboard = advancedDecision( board, 'O', 'X', 2 )             # Convert time in seconds to milliseconds
+        board = copy.deepcopy(newboard.gameboard)
+ 
+        # Check for tie
+        moves = checkBoard(board, 'X')
+        if len(moves[3]) == 0:
+            beginvsadvancedTie += 1
+            break
+
     pp.pprint(board)
 
     winner = checkWinner(board, 'X', 'O')
@@ -215,16 +229,25 @@ def beginnerVsAdvacedPlay():
     if winner == 'X':
         print_winner = 'Beginner'
         beginWins += 1
+        return 1
     elif winner == 'O':
         print_winner = 'Advanced'
         advancedWins +=1
+        return -1
     else:
         print_winner = 'Tie'
+        return 0
 
     print('The winner is: {0}'.format(print_winner))
-# beginnerVsAdvacedPlay()
+    
+# beginnerVsAdvancedPlay()
 
-
+#--------------------------------------------------------------
+#
+#   advancedVsBeginnerplay()
+#       Main function for advanced vs. beginner
+#
+#--------------------------------------------------------------
 def advancedVsBeginnerplay():
     global moveCount, numNodesGen, board, beginWins, masterWins, beginvsadvancedTie
 
@@ -236,28 +259,34 @@ def advancedVsBeginnerplay():
          [' ',' ',' ',' ',' ']]# 5
 
     pp = pprint.PrettyPrinter()
-    # Beginner is X's, User is O's
+    # Advanced is X's, Beginner is O's
     while checkWinner(board, 'X', 'O') == 0:
-        # Beginner's move
-
+        
         # Advanced's move
         numNodesGen = 0 
-        newboard = masterDecision( board, 'X', 'O', 2 )
+        newboard = advancedDecision( board, 'X', 'O', 2 )
 
         board = copy.deepcopy(newboard.gameboard)
         
+        # Check for winner
         if checkWinner(board, 'X', 'O') != 0:
             break
 
+        # check for tie
         moves = checkBoard(board, 'X')
         if len(moves[3]) == 0:
             beginvsadvancedTie += 1
             break
 
+        # Beginner's move
         move = beginnerDecision(board, 'O')
         board[move[1]][move[0]] = 'O'
     
-
+        # Check for tie
+        moves = checkBoard(board, 'X')
+        if len(moves[3]) == 0:
+            beginvsadvancedTie += 1
+            break
 
     pp.pprint(board)
 
@@ -266,16 +295,24 @@ def advancedVsBeginnerplay():
     if winner == 'O':
         print_winner = 'Beginner'
         beginWins += 1
+        return -1
     elif winner == 'X':
         print_winner = 'Advanced'
         advancedWins +=1
+        return 1
     else:
         print_winner = 'Tie'
+        return 0
 
     print('The winner is: {0}'.format(print_winner))
 # advancedVsBeginnerplay()
 
-
+#--------------------------------------------------------------
+#
+#   beginnervsmasterplay()
+#       Main function for beginner vs. master
+#
+#--------------------------------------------------------------
 def beginnervsmasterplay():
     global moveCount, numNodesGen, board, beginWins, masterWins, beginvsmasterTie
 
@@ -287,13 +324,20 @@ def beginnervsmasterplay():
          [' ',' ',' ',' ',' ']]# 5
 
     pp = pprint.PrettyPrinter()
-    # Beginner is X's, User is O's
+    # Beginner is X's, Master is O's
     while checkWinner(board, 'X', 'O') == 0:
         # Beginner's move
         move = beginnerDecision(board, 'X')
         board[move[1]][move[0]] = 'X'
         
+        # Check for winner
         if checkWinner(board, 'X', 'O') != 0:
+            break
+
+        # Check for tie 
+        moves = checkBoard(board, 'X')
+        if len(moves[3]) == 0:
+            beginvsmasterTie += 1
             break
 
         # Master's move
@@ -303,11 +347,16 @@ def beginnervsmasterplay():
         newboard = newboard.parent              # Convert time in seconds to milliseconds
         board = copy.deepcopy(newboard.gameboard)
  
-        
+        # Check for winner
+        if checkWinner(board, 'X', 'O') != 0:
+            break
+    
+        # Check for tie
         moves = checkBoard(board, 'X')
-        if moves[3] is None:
+        if len(moves[3]) == 0:
             beginvsmasterTie += 1
             break
+
     pp.pprint(board)
 
     winner = checkWinner(board, 'X', 'O')
@@ -315,15 +364,24 @@ def beginnervsmasterplay():
     if winner == 'X':
         print_winner = 'Beginner'
         beginWins += 1
+        return 1
     elif winner == 'O':
         print_winner = 'Master'
         masterWins +=1
+        return -1
     else:
         print_winner = 'Tie'
+        return 0
 
     print('The winner is: {0}'.format(print_winner))
-# masterplay()
+# beginnervsmasterplay()
 
+#--------------------------------------------------------------
+#
+#   mastervsbeginnerplay()
+#       Main function for master vs. beginner
+#
+#--------------------------------------------------------------
 def mastervsbeginnerplay():
     global moveCount, numNodesGen, board, beginWins, masterWins, beginvsmasterTie
 
@@ -335,9 +393,8 @@ def mastervsbeginnerplay():
          [' ',' ',' ',' ',' ']]# 5
 
     pp = pprint.PrettyPrinter()
-    # Beginner is X's, User is O's
+    # Master is X's, Beginner is O's
     while checkWinner(board, 'X', 'O') == 0:
-        # Beginner's move
 
         # Master's move
         numNodesGen = 0 
@@ -346,18 +403,29 @@ def mastervsbeginnerplay():
         newboard = newboard.parent              # Convert time in seconds to milliseconds
         board = copy.deepcopy(newboard.gameboard)
         
+        # Check for winner
         if checkWinner(board, 'X', 'O') != 0:
             break
-
+    
+        # Check for tie
         moves = checkBoard(board, 'X')
-        if moves[3] is None:
+        if len(moves[3]) == 0:
             beginvsmasterTie += 1
             break
 
+        # Beginner's move
         move = beginnerDecision(board, 'O')
         board[move[1]][move[0]] = 'O'
     
- 
+        # Check for winner
+        if checkWinner(board, 'X', 'O') != 0:
+            break
+    
+        # Check for tie
+        moves = checkBoard(board, 'X')
+        if len(moves[3]) == 0:
+            beginvsmasterTie += 1
+            break
 
     pp.pprint(board)
 
@@ -366,16 +434,162 @@ def mastervsbeginnerplay():
     if winner == 'O':
         print_winner = 'Beginner'
         beginWins += 1
+        return -1
     elif winner == 'X':
         print_winner = 'Master'
         masterWins +=1
+        return 1
     else:
         print_winner = 'Tie'
+        return 0
 
     print('The winner is: {0}'.format(print_winner))
-# masterplay()
+# mastervsbeginnerplay()
+
+#--------------------------------------------------------------
+#
+#   advancedvsmasterplay()
+#       Main function for advanced vs. master
+#
+#--------------------------------------------------------------
+def advancedvsmasterplay():
+    global moveCount, numNodesGen, board, advancedWins, masterWins, advancedvsmasterTie
+
+    board = [[' ',' ',' ',' ',' '],# 0
+         [' ',' ',' ',' ',' '],# 1
+         [' ',' ',' ',' ',' '],# 2
+         [' ',' ',' ',' ',' '],# 3
+         [' ',' ',' ',' ',' '],# 4
+         [' ',' ',' ',' ',' ']]# 5
+
+    pp = pprint.PrettyPrinter()
+    # Beginner is X's, Master is O's
+    while checkWinner(board, 'X', 'O') == 0:
+        # Advanced's move
+        numNodesGen = 0 
+        newboard = advancedDecision( board, 'X', 'O', 2 )
+
+        board = copy.deepcopy(newboard.gameboard)
+
+        
+        # Check for winner
+        if checkWinner(board, 'X', 'O') != 0:
+            break
+
+        # Check for tie 
+        moves = checkBoard(board, 'X')
+        if len(moves[3]) == 0:
+            advancedvsmasterTie += 1
+            break
+
+        # Master's move
+        numNodesGen = 0 
+        newboard = masterDecision( board, 'O', 'X', 4 )
+        newboard = newboard.parent
+        newboard = newboard.parent              # Convert time in seconds to milliseconds
+        board = copy.deepcopy(newboard.gameboard)
+ 
+        # Check for winner
+        if checkWinner(board, 'X', 'O') != 0:
+            break
+    
+        # Check for tie
+        moves = checkBoard(board, 'X')
+        if len(moves[3]) == 0:
+            advancedvsmasterTie += 1
+            break
+
+    pp.pprint(board)
+
+    winner = checkWinner(board, 'X', 'O')
+    
+    if winner == 'X':
+        print_winner = 'Advanced'
+        advancedWins += 1
+        return 1
+    elif winner == 'O':
+        print_winner = 'Master'
+        masterWins +=1
+        return -1
+    else:
+        print_winner = 'Tie'
+        return 0
+
+    print('The winner is: {0}'.format(print_winner))
+# advancedvsmasterplay()
 
 
+#--------------------------------------------------------------
+#
+#   mastervsadvancedplay()
+#       Main function for advanced vs. master
+#
+#--------------------------------------------------------------
+def mastervsadvancedplay():
+    global moveCount, numNodesGen, board, advancedWins, masterWins, advancedvsmasterTie
+
+    board = [[' ',' ',' ',' ',' '],# 0
+         [' ',' ',' ',' ',' '],# 1
+         [' ',' ',' ',' ',' '],# 2
+         [' ',' ',' ',' ',' '],# 3
+         [' ',' ',' ',' ',' '],# 4
+         [' ',' ',' ',' ',' ']]# 5
+
+    pp = pprint.PrettyPrinter()
+    # Beginner is X's, Master is O's
+    while checkWinner(board, 'X', 'O') == 0:
+
+        # Master's move
+        numNodesGen = 0 
+        newboard = masterDecision( board, 'O', 'X', 4 )
+        newboard = newboard.parent
+        newboard = newboard.parent             
+        board = copy.deepcopy(newboard.gameboard)
+        
+        # Check for winner
+        if checkWinner(board, 'X', 'O') != 0:
+            break
+
+        # Check for tie 
+        moves = checkBoard(board, 'X')
+        if len(moves[3]) == 0:
+            advancedvsmasterTie += 1
+            break
+
+        # Advanced's move
+        numNodesGen = 0 
+        newboard = advancedDecision( board, 'X', 'O', 2 )
+
+        board = copy.deepcopy(newboard.gameboard)
+ 
+        # Check for winner
+        if checkWinner(board, 'X', 'O') != 0:
+            break
+    
+        # Check for tie
+        moves = checkBoard(board, 'X')
+        if len(moves[3]) == 0:
+            advancedvsmasterTie += 1
+            break
+
+    pp.pprint(board)
+
+    winner = checkWinner(board, 'X', 'O')
+    
+    if winner == 'O':
+        print_winner = 'Advanced'
+        advancedWins += 1
+        return -1
+    elif winner == 'X':
+        print_winner = 'Master'
+        masterWins +=1
+        return 1
+    else:
+        print_winner = 'Tie'
+        return 0
+
+    print('The winner is: {0}'.format(print_winner))
+# mastervsadvancedplay()
 
 #--------------------------------------------------------------
 #
@@ -816,34 +1030,71 @@ def printBoard( state ):
 # printBoard()
 
 
-# Call main function
-#main()
-
 # for playing the beginner
-#beginplay()
+beginplay()
 
 # for playing advanced vs beginner
-#advancedplay()
+advancedplay()
 
 # for playing master vs advanced
-#masterplay()
+masterplay()
 
+beginnervsadvancedresult = 0
+advancedvsbeginnerresult = 0
+beginnervsmasterresult = 0
+mastervsbeginnerresult = 0
+advancedvsmasterresult = 0
+mastervsadvancedresult = 0
+
+# Round robin tournament
 for i in range( 0, 49 ):
-    advancedVsBeginnerplay()
-    
+    beginnervsadvancedresult = beginnerVsAdvancedPlay()
+    advancedvsbeginnerresult = advancedVsBeginnerplay()
+    beginnervsmasterresult = beginnervsmasterplay()
+    mastervsbeginnerresult = mastervsbeginnerplay()
+    advancedvsmasterresult = advancedvsmasterplay()
+    mastervsadvancedresult = mastervsadvancedplay()
 
-print('Number of beginner wins {0}'.format(beginWins))
-print('Number of advanced wins {0}'.format(advancedWins))
-print('Number of ties {0}'.format(beginvsadvancedTie))
+    if beginnervsadvancedresult == 1:
+        print('Beginner won in the beginnervsadvanced game')
+    elif beginnervsadvancedresult == -1:
+        print('Advanced won in the beginnervsadvanced game')
+    else:
+        print('The beginnervsadvanced game resulted in a tie')
+
+    if advancedvsbeginnerresult == -1:
+        print('Beginner won in the advancedVsBeginner game')
+    elif advancedvsbeginnerresult == 1:
+        print('Advanced won in the advancedVsBeginner game')
+    else:
+        print('The advancedVsBeginner game resulted in a tie')
+
+    if beginnervsmasterresult == 1:
+        print('Beginner won in the beginnervsmaster game')
+    elif beginnervsmasterresult == -1:
+        print('Master won in the beginnervsmaster game')
+    else:
+        print('The beginnervsmaster game resulted in a tie')
+
+    if mastervsbeginnerresult == -1:
+        print('Beginner won in the mastervsbeginner game')
+    elif mastervsbeginnerresult == 1:
+        print('Master won in the mastervsbeginner game')
+    else:
+        print('The mastervsbeginner game resulted in a tie')
+
+    if advancedvsmasterresult == 1:
+        print('Advanced won in the advancedvsmaster game')
+    elif advancedvsmasterresult == -1:
+        print('Master won in the advancedvsmaster game')
+    else:
+        print('The advancedvsmaster game resulted in a tie')
+
+    if mastervsadvancedresult == -1:
+        print('Advanced won in the beginnervsadvanced game')
+    elif mastervsadvancedresult == 1:
+        print('Master won in the beginnervsadvanced game')
+    else:
+        print('The beginnervsadvanced game resulted in a tie')
 
 
-#beginnerWins = 0
-#advancedWins = 0
-#beginvsadvancedTie = 0
-
-#for i in range( 0, 49 ):
-#    beginnerVsAdvacedPlay()
-
-#print('Number of beginner wins {0}'.format(beginWins))
-#print('Number of advanced wins {0}'.format(advancedWins))
-#print('Number of ties {0}'.format(beginvsadvancedTie))
